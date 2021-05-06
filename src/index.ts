@@ -2,8 +2,10 @@ import express, { Application } from "express";
 import morgan from "morgan";
 import cors from "cors";
 import * as dotenv from "dotenv";
+import connectionDB from "./database/connectionDB";
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
+import userRoutes from "./routes/user.routes";
 
 class Serve {
   public app: Application;
@@ -11,10 +13,11 @@ class Serve {
   public io: any;
 
   constructor() {
+    dotenv.config();
+    connectionDB();
     this.app = express();
     this.serve = createServer(this.app);
     this.io = new Server(this.serve, { path: "/wss" });
-    dotenv.config();
     this.config();
     this.routes();
     this.rooms();
@@ -27,7 +30,7 @@ class Serve {
     this.app.use(cors());
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: false }));
-    this.app.use("/static", express.static("public"));
+    this.app.use("/static", express.static("src/public"));
     this.app.use(function (req, res, next) {
       res.header("Access-Control-Allow-Origin", process.env.ACCESS_SOCKET);
       res.header("Access-Control-Allow-Credentials", "true");
@@ -41,9 +44,7 @@ class Serve {
   }
 
   routes(): void {
-    this.app.get("/", (req, res) => {
-      res.json({ message: "hello world" });
-    });
+    this.app.use("/users", userRoutes);
   }
 
   rooms(): void {
